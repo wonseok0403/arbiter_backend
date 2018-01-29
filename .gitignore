@@ -1,0 +1,8 @@
+env/
+__pycache__/
+migrations/
+arbitee/
+sensitives.pickle
+db.sqlite3
+celerybeat.pid
+
