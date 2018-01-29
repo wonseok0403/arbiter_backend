@@ -52,7 +52,7 @@ app.conf.beat_schedule = {
         'args': ()
         },
     'get-ohlcv-04': {
-        'task': 'ohlcv-get-4',
+        'task': 'ohlcv-get-04',
         'schedule': crontab(minute=0, hour=7, day_of_week='sun-thu'),
         'args': ()
         },
