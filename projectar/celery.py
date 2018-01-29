@@ -16,11 +16,11 @@ def debug_task(self):
 
 from celery.schedules import crontab
 app.conf.beat_schedule = {
-    # 'add-every-60-seconds': {
-    #     'task': 'scrape_upbit',
-    #     'schedule': 60.0,
-    #     'args': ()
-    #     },
+    'add-every-60-seconds': {
+        'task': 'scrape_upbit',
+        'schedule': 60.0,
+        'args': ()
+        },
     'scrape-daum-ticker-at-8': {
         'task': 'stock-ticker',
         'schedule': crontab(minute=0, hour=0, day_of_week='sun-thu'),
@@ -84,6 +84,31 @@ app.conf.beat_schedule = {
     'get-ohlcv-10': {
         'task': 'ohlcv-get-10',
         'schedule': crontab(minute=0, hour=7, day_of_week='sun-thu'),
+        'args': ()
+        },
+    'get-info-01': {
+        'task': 'info-get-01',
+        'schedule': 1000,
+        'args': ()
+        },
+    'get-info-02': {
+        'task': 'info-get-02',
+        'schedule': 1000,
+        'args': ()
+        },
+    'get-ohlcv-03': {
+        'task': 'info-get-03',
+        'schedule': 1000,
+        'args': ()
+        },
+    'get-ohlcv-04': {
+        'task': 'info-get-04',
+        'schedule': 1000,
+        'args': ()
+        },
+    'get-info-05': {
+        'task': 'info-get-05',
+        'schedule': 1000,
         'args': ()
         },
     }

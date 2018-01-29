@@ -4,8 +4,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import requests
 import re
-from stockapi.models import Ticker, OHLCV, STOCKINFO
+from stockapi.models import Ticker, OHLCV, STOCKINFO, Info
 import pandas as pd
+import json
 
 
 @task(name="stock-ticker")
@@ -245,43 +246,162 @@ def ohlcv_10():
     ohlcv(ticker_list)
 
 
+def info(ticker):
+    success = False
+    data_list=[]
+    date = datetime.now().strftime('%Y%m%d')
+    f = open(date+"_daily_info_log2.txt", 'w')
+    user_agent = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'}
+    for i in range(len(ticker)) :
+        url = 'http://companyinfo.stock.naver.com/v1/company/c1010001.aspx?cn=&cmp_cd='+ ticker[i].code
+        code = ticker[i].code
+        name = ticker[i].name
+        r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
+        soup = BeautifulSoup(r.text, 'html.parser')
+        tmp = soup.findAll('td',{'class':'cmp-table-cell td0101'})
+        if len(tmp) != 0:
+            tmp=tmp[0].findAll('dt',{'class':'line-left'})[1].text.replace(' ','').split(':')
+            market_type = tmp[0]
+            industry = tmp[1]
+            url = 'http://finance.naver.com/item/coinfo.nhn?code='+ ticker[i].code
+            r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
+            soup = BeautifulSoup(r.text, 'html.parser')
+            todayinfo = soup.findAll('dl',{'class':'blind'})
+            stockinfo = pd.read_html(url, thousands='')
+            price = todayinfo[0].findAll('dd')[3].text.split(' ')[1].replace(',','')
+            if len(stockinfo[1]) < 5:
+                face_val = 0
+                stock_nums = stockinfo[1].iloc[1,1].replace(',','')#상장주식수
+                foreign_limit = 0
+                foreign_possession = 0
+                foreign_ratio = 0
+                per = 0
+                eps = 0
+                pbr = 0
+                bps = 0
+                industry_per = 0
+                yield_ret = 0
+            else:
+                face_val = stockinfo[1].iloc[3,1].replace(' ','').replace(',','').replace('원','').split('l')[0]
+                stock_nums = stockinfo[1].iloc[2,1].replace(',','')#상장주식수
+                foreign_limit = stockinfo[2].iloc[0,1].replace(',','')
+                foreign_possession = stockinfo[2].iloc[1,1].replace(',','')
+                foreign_ratio = stockinfo[2].iloc[2,1].replace('%','')
+                #per, eps
+                per_td = soup.findAll('table',{'class':'per_table'})
+                td = per_td[0].findAll('em')
+                per_table = []
+                for t in td:
+                    a = t.text
+                    per_table.append(a)
+                if per_table[0] == "N/A":
+                    per = 0
+                else:
+                    per = per_table[0].replace(',','')
+                if per_table[1] == "N/A":
+                    eps = 0
+                else:
+                    eps = per_table[1].replace(',','')
+                if per_table[8] == "N/A":
+                    yield_ret = 0
+                else:
+                    yield_ret = per_table[8]
+                if per_table[7] == "N/A":
+                    bps = 0
+                else:
+                    bps = per_table[7].replace(',','')
+                if bps == 0:
+                    pbr = 0
+                else:
+                    pbr= round(int(price)/int(bps),2)
+                industry_per = stockinfo[5].iloc[0,1].replace('배','').replace(',','')
+            market_cap = int(price)*int(stock_nums) #시가총액
+            tmp_json=Info(date=date,code=code,name=name,market_type=market_type,industry=industry,
+                      price=price,face_val=face_val,stock_nums=stock_nums,market_cap=market_cap,foreign_limit=foreign_limit,
+                      foreign_possession=foreign_possession, foreign_ratio=foreign_ratio,per=per,eps=eps,
+                      bps=bps,pbr=pbr,industry_per=industry_per,yield_ret=yield_ret)
+            data_list.append(tmp_json)
+            log = {'date':date,'code':code,'name':name,'market_type':market_type,'industry':industry,'price':price,'face_val':face_val,'stock_nums':stock_nums,
+                'market_cap':market_cap,'foreign_limit':foreign_limit,'foreign_possession':foreign_possession, 'foreign_ratio':foreign_ratio,
+                'per':per,'eps':eps,'bps':bps,'pbr':pbr,'industry_per':industry_per,'yield_ret':yield_ret}
+            f.write(str(log)+'\n')
+        else:
+            url = 'http://finance.naver.com/item/coinfo.nhn?code='+ ticker[i].code
+            r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
+            soup = BeautifulSoup(r.text, 'html.parser')
+            market_type = "KOSPI"
+            industry = "ETF"
+            soup = BeautifulSoup(r.text, 'html.parser')
+            todayinfo = soup.findAll('dl',{'class':'blind'})
+            price = todayinfo[0].findAll('dd')[3].text.split(' ')[1].replace(',','')
+            stockinfo = pd.read_html(url, thousands='')
+            stock_nums = stockinfo[1].iloc[1,1].replace(',','')#상장주식수
+            face_val = 0
+            market_cap = int(price)*int(stock_nums) #시가총액
+            foreign_limit = 0
+            foreign_possession = 0
+            foreign_ratio = 0
+            per = 0
+            eps = 0
+            pbr = 0
+            bps = 0
+            industry_per = 0
+            yield_ret = 0
+            tmp_json=Info(date=date,code=code,name=name,market_type=market_type,industry=industry,
+                      price=price,face_val=face_val,stock_nums=stock_nums,market_cap=market_cap,foreign_limit=foreign_limit,
+                      foreign_possession=foreign_possession, foreign_ratio=foreign_ratio,per=per,eps=eps,
+                      bps=bps,pbr=pbr,industry_per=industry_per,yield_ret=yield_ret)
+            data_list.append(tmp_json)
+            log = {'date':date,'code':code,'name':name,'market_type':market_type,'industry':industry,'price':price,'face_val':face_val,'stock_nums':stock_nums,
+                'market_cap':market_cap,'foreign_limit':foreign_limit,'foreign_possession':foreign_possession,'foreign_ratio':foreign_ratio,
+                'per':per,'eps':eps,'bps':bps,'pbr':pbr,'industry_per':industry_per,'yield_ret':yield_ret}
+            f.write(str(log)+"\n")
+    f.close()
+    success=True
+    Info.objects.bulk_create(data_list)
+    return success
 
-# @task(name="kospi-ticker")
-# def kospiticker():
-#     # for market in market_list:
-#     success = False
-#     industry = {}
-#     data_list=[]
-#     date = datetime.now().strftime('%Y%m%d')
-#     url = 'http://finance.daum.net/quote/all.daum?type=U&stype=P'
-#     user_agent = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'}
-#     r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
-#     soup = BeautifulSoup(r.text, 'html.parser')
-#     h4 = soup.findAll('h4', {'class':'fl_le'})
-#     table = soup.findAll('table',{'class':'gTable clr'})
-#
-#     for i in range(len(h4)):
-#         sec = h4[i].text
-#         sec = re.sub('[0-9]','',sec)
-#         sec = re.sub('[-.%|]','',sec)
-#         industry[i] = sec
-#
-#     for i in range(len(industry)):
-#         td = table[i].findAll('td', {'class':'txt'})
-#         sector = industry[i]
-#         for t in td:
-#             ticker_inst = {}
-#             name = t.text
-#             a_tag = t.findAll('a')
-#             link = a_tag[0].attrs['href']
-#             code = link[-6:]
-#
-#             ticker_inst = Ticker(date=date,
-#                                 name=name,
-#                                 code=code,
-#                                 sector=sector,
-#                                 market_type='KOSPI')
-#             data_list.append(ticker_inst)
-#     Ticker.objects.bulk_create(data_list)
-#     success = True
-#     return success
+@task(name="info-get-01")
+def info_1():
+    today = datetime.now().strftime('%Y%m%d')
+    ticker = Ticker.objects.filter(date=today).order_by('id')
+    ticker_count = ticker.count()
+    ticker_cut = ticker_count//5
+    ticker_list = ticker[:ticker_cut]
+    info(ticker_list)
+
+@task(name="info-get-02")
+def info_2():
+    today = datetime.now().strftime('%Y%m%d')
+    ticker = Ticker.objects.filter(date=today).order_by('id')
+    ticker_count = ticker.count()
+    ticker_cut = ticker_count//5
+    ticker_list = ticker[ticker_cut:2*ticker_cut]
+    info(ticker_list)
+
+@task(name="info-get-03")
+def info_3():
+    today = datetime.now().strftime('%Y%m%d')
+    ticker = Ticker.objects.filter(date=today).order_by('id')
+    ticker_count = ticker.count()
+    ticker_cut = ticker_count//5
+    ticker_list = ticker[2*ticker_cut:3*ticker_cut]
+    info(ticker_list)
+
+@task(name="info-get-04")
+def info_4():
+    today = datetime.now().strftime('%Y%m%d')
+    ticker = Ticker.objects.filter(date=today).order_by('id')
+    ticker_count = ticker.count()
+    ticker_cut = ticker_count//5
+    ticker_list = ticker[3*ticker_cut:4*ticker_cut]
+    info(ticker_list)
+
+@task(name="info-get-05")
+def info_5():
+    today = datetime.now().strftime('%Y%m%d')
+    ticker = Ticker.objects.filter(date=today).order_by('id')
+    ticker_count = ticker.count()
+    ticker_cut = ticker_count//5
+    ticker_list = ticker[4*ticker_cut:]
+    info(ticker_list)
