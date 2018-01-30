@@ -84,3 +84,63 @@ class Info(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.code, self.name)
+
+
+class Financial(models.Model):
+    code = models.CharField(max_length=6)
+    name = models.CharField(max_length=50)
+    date = models.CharField(max_length=10)
+    revenue = models.IntegerField(blank=True, null=True)
+    profit = models.IntegerField(blank=True, null=True)
+    net_profit = models.IntegerField(blank=True, null=True)
+    consolidate_profit = models.IntegerField(blank=True, null=True)
+    asset = models.IntegerField(blank=True, null=True)
+    debt = models.IntegerField(blank=True, null=True)
+    capital = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.code, self.name)
+
+
+class FinancialRatio(models.Model):
+    date = models.CharField(max_length=10)
+    code = models.CharField(max_length=6)
+    name = models.CharField(max_length=50)
+    debt_ratio = models.FloatField(blank=True, null=True)
+    profit_ratio = models.FloatField(blank=True, null=True)
+    net_profit_ratio = models.FloatField(blank=True, null=True)
+    consolidate_profit_ratio = models.FloatField(blank=True, null=True)
+    net_ROE = models.FloatField(blank=True, null=True)
+    consolidate_ROE = models.FloatField(blank=True, null=True)
+    revenue_growth = models.FloatField(blank=True, null=True)
+    profit_growth = models.FloatField(blank=True, null=True)
+    net_profit_growth = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.code, self.name)
+
+
+class QuarterFinacial(models.Model):
+    date = models.CharField(max_length=10)
+    code = models.CharField(max_length=6)
+    name = models.CharField(max_length=50)
+    revenue = models.IntegerField(blank=True, null=True)
+    profit = models.IntegerField(blank=True, null=True)
+    net_profit = models.IntegerField(blank=True, null=True)
+    consolidate_profit = models.IntegerField(blank=True, null=True)
+    profit_ratio = models.FloatField(blank=True, null=True)
+    net_profit_ratio = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.code, self.name)
+
+
+class BuySell(models.Model):
+    date = models.CharField(max_length=10)
+    code = models.CharField(max_length=6)
+    name = models.CharField(max_length=50)
+    institution = models.IntegerField(blank=True, null=True)
+    foreigner = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.code, self.name)
