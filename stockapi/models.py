@@ -64,7 +64,7 @@ class Info(models.Model):
                                   blank=True,
                                   null=True) # 스타일
     market_type=models.CharField(max_length=10)
-    face_val = models.IntegerField(blank=True, null=True) # 액면가
+    face_val = models.CharField(max_length=10,blank=True, null=True) # 액면가
     stock_nums = models.BigIntegerField(blank=True, null=True) # 상장주식수
     price = models.IntegerField(blank=True)#당일 종가
     market_cap = models.BigIntegerField(blank=True, null=True) # 시가총액

@@ -6,7 +6,7 @@ import requests
 import re
 from stockapi.models import Ticker, OHLCV, STOCKINFO, Info
 import pandas as pd
-import json
+import math
 
 
 @task(name="stock-ticker")
@@ -250,7 +250,7 @@ def info(ticker):
     success = False
     data_list=[]
     date = datetime.now().strftime('%Y%m%d')
-    f = open(date+"_daily_info_log2.txt", 'w')
+    f = open(date+"_daily_info_log.txt", 'w')
     user_agent = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'}
     for i in range(len(ticker)) :
         url = 'http://companyinfo.stock.naver.com/v1/company/c1010001.aspx?cn=&cmp_cd='+ ticker[i].code
@@ -269,19 +269,7 @@ def info(ticker):
             todayinfo = soup.findAll('dl',{'class':'blind'})
             stockinfo = pd.read_html(url, thousands='')
             price = todayinfo[0].findAll('dd')[3].text.split(' ')[1].replace(',','')
-            if len(stockinfo[1]) < 5:
-                face_val = 0
-                stock_nums = stockinfo[1].iloc[1,1].replace(',','')#상장주식수
-                foreign_limit = 0
-                foreign_possession = 0
-                foreign_ratio = 0
-                per = 0
-                eps = 0
-                pbr = 0
-                bps = 0
-                industry_per = 0
-                yield_ret = 0
-            else:
+            if len(stockinfo[1]) == 5:
                 face_val = stockinfo[1].iloc[3,1].replace(' ','').replace(',','').replace('원','').split('l')[0]
                 stock_nums = stockinfo[1].iloc[2,1].replace(',','')#상장주식수
                 foreign_limit = stockinfo[2].iloc[0,1].replace(',','')
@@ -314,8 +302,61 @@ def info(ticker):
                     pbr = 0
                 else:
                     pbr= round(int(price)/int(bps),2)
-                industry_per = stockinfo[5].iloc[0,1].replace('배','').replace(',','')
-            market_cap = int(price)*int(stock_nums) #시가총액
+                print(code,stockinfo[5].iloc[0,1])
+                try:
+                    math.isnan(float(stockinfo[5].iloc[0,1].replace('배','').replace(',','')))
+                    industry_per = float(stockinfo[5].iloc[0,1].replace('배','').replace(',',''))
+                except AttributeError:
+                    industry_per = 0
+                print(code,industry_per)
+                market_cap = int(price)*int(stock_nums) #시가총액
+            elif len(stockinfo[1]) == 4:
+                face_val = 0
+                stock_nums = stockinfo[1].iloc[2,1].replace(',','')#상장주식수
+                foreign_limit = stockinfo[2].iloc[0,1].replace(',','')
+                foreign_possession = stockinfo[2].iloc[1,1].replace(',','')
+                foreign_ratio = stockinfo[2].iloc[2,1].replace('%','')
+                #per, eps
+                per_td = soup.findAll('table',{'class':'per_table'})
+                td = per_td[0].findAll('em')
+                per_table = []
+                for t in td:
+                    a = t.text
+                    per_table.append(a)
+                per = per_table[0]
+                eps = per_table[1].replace(',','')
+                if per_table[8] == "N/A":
+                    yield_ret = 0
+                else:
+                    yield_ret = per_table[8]
+                if per_table[7] == "N/A":
+                    bps = 0
+                else:
+                    bps = per_table[7].replace(',','')
+                if bps == 0:
+                    pbr = 0
+                else:
+                    pbr= round(int(price)/int(bps),2)
+                try:
+                    math.isnan(float(stockinfo[5].iloc[0,1].replace('배','').replace(',','')))
+                    industry_per = float(stockinfo[5].iloc[0,1].replace('배','').replace(',',''))
+                except AttributeError:
+                    industry_per = 0
+                print(code,industry_per)
+                market_cap = int(price)*int(stock_nums)
+            else:
+                face_val = 0
+                stock_nums = stockinfo[1].iloc[1,1].replace(',','')#상장주식수
+                foreign_limit = 0
+                foreign_possession = 0
+                foreign_ratio = 0
+                per = 0
+                eps = 0
+                pbr = 0
+                bps = 0
+                industry_per = 0
+                yield_ret = 0
+                market_cap = int(price)*int(stock_nums)
             tmp_json=Info(date=date,code=code,name=name,market_type=market_type,industry=industry,
                       price=price,face_val=face_val,stock_nums=stock_nums,market_cap=market_cap,foreign_limit=foreign_limit,
                       foreign_possession=foreign_possession, foreign_ratio=foreign_ratio,per=per,eps=eps,
