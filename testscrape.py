@@ -84,7 +84,7 @@ class Management(object):
                     self.ordered_info.size_type = 'S'
                 self.ordered_info.save()
                 kospi_rank += 1
-                print(kospi_rank)
+                # print(kospi_rank)
             else: #코스닥
                 self.ordered_info.market_cap_rank = kosdaq_rank
                 if (kosdaq_rank<=100):
@@ -95,5 +95,5 @@ class Management(object):
                     self.ordered_info.size_type = 'S'
                 self.ordered_info.save()
                 kosdaq_rank += 1
-                print(kosdaq_rank)
+                # print(kosdaq_rank)
         return True

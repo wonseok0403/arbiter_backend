@@ -64,43 +64,44 @@ def ticker():
 stock = ticker()
 
 
-# In[21]:
-
-def buysellrecent():
-    data_list=[]
-    start = time.time()
-    for i in range(100):
-        url = 'http://finance.naver.com/item/frgn.nhn?code='+ stock[i]['code']
-        print(url)
-        user_agent = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'}
-        r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
-        soup = BeautifulSoup(r.text, 'html.parser')
-        tmp = soup.findAll('table',{'class':'type2'})
-        table = soup.findAll('tr',{'onmouseout':'mouseOut(this)'})
-        date=table[1].find('span',{'class':'tah p10 gray03'}).text.replace('.','')
-        code=stock[i]['code']
-        name=stock[i]['name']
-        institustion = table[0].findAll('td')[5].text
-        if type(institustion) == int:
-            institustion = institustion
-        else:
-            institustion = institustion.replace(',','')
-        foriegn = table[0].findAll('td')[6].text
-        if type(foriegn) == int:
-            foriegn = foriegn
-        else:
-            foriegn = foriegn.replace(',','')
-        tmp_data = {'date':date, 'code':code, 'name':name, 'institution':institustion, 'foreign':foriegn}
-        data_list.append(tmp_data)
-    end = time.time()
-    return end-start, data_list
-
-buyselltoday()
+# # In[21]:
+#
+# def buysellrecent():
+#     data_list=[]
+#     start = time.time()
+#     for i in range(100):
+#         url = 'http://finance.naver.com/item/frgn.nhn?code='+ stock[i]['code']
+#         print(url)
+#         user_agent = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36'}
+#         r = requests.get(url, headers= user_agent, auth=('user', 'pass'))
+#         soup = BeautifulSoup(r.text, 'html.parser')
+#         tmp = soup.findAll('table',{'class':'type2'})
+#         table = soup.findAll('tr',{'onmouseout':'mouseOut(this)'})
+#         date=table[1].find('span',{'class':'tah p10 gray03'}).text.replace('.','')
+#         code=stock[i]['code']
+#         name=stock[i]['name']
+#         institustion = table[0].findAll('td')[5].text
+#         if type(institustion) == int:
+#             institustion = institustion
+#         else:
+#             institustion = institustion.replace(',','')
+#         foriegn = table[0].findAll('td')[6].text
+#         if type(foriegn) == int:
+#             foriegn = foriegn
+#         else:
+#             foriegn = foriegn.replace(',','')
+#         tmp_data = {'date':date, 'code':code, 'name':name, 'institution':institustion, 'foreign':foriegn}
+#         data_list.append(tmp_data)
+#     end = time.time()
+#     return end-start, data_list
+#
+# buyselltoday()
 
 
 # In[36]:
 
 def buyselltotal():
+    success = False
     start = time.time()
     today = datetime.now()
     one_year_ago = today-timedelta(days=365)
@@ -108,7 +109,8 @@ def buyselltotal():
     one_year_ago
     data_list = []
     page = 1
-    for i in range(len(stock)):
+    for i in range(267):
+        f = open(today+"_total_buysell_log.txt", 'w')
         code = stock[i]['code']
         page = 1
         while page:
@@ -123,18 +125,23 @@ def buyselltotal():
                 date=table[i].find('span',{'class':'tah p10 gray03'}).text.replace('.','')
                 if date <= one_year_ago:
                     break
-                institustion = table[i].findAll('td')[5].text
+                institution = table[i].findAll('td')[5].text
                 if type(institustion) == int:
-                    institustion = institustion
+                    institution = institution
                 else:
-                    institustion = institustion.replace(',','')
+                    institution = institution.replace(',','')
                 foriegn = table[0].findAll('td')[6].text
                 if type(foriegn) == int:
                     foriegn = foriegn
                 else:
                     foriegn = foriegn.replace(',','')
-                tmp = {'date':date, 'code':'058820', 'institustion':institustion, 'foriegn':foriegn}
+                tmp = {'date':date, 'code':'058820', 'institution':institution, 'foriegn':foriegn}
+                f.write(str(tmp)+'\n')
                 data_list.append(tmp)
             page = 0 if date <= one_year_ago else page+1
+    f.close()
     end = time.time()
-    return end-start, data_list
+    success =True
+    return success, end-start
+
+buyselltotal()
