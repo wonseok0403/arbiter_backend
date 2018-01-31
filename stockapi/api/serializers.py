@@ -127,10 +127,10 @@ class QuarterFinacialSerializer(serializers.ModelSerializer):
 class BuySellSerializer(serializers.ModelSerializer):
     class Meta:
         model = BuySell
-        fields = {'id',
+        fields = ('id',
                 'date',
                 'name',
                 'code',
                 'institution',
                 'foreigner',
-                }
+                )
