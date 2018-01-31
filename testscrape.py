@@ -4,7 +4,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import requests
 import re
-from stockapi.models import Ticker, OHLCV, STOCKINFO
+from stockapi.models import Ticker, OHLCV, STOCKINFO, Info
 import pandas as pd
 
 
@@ -55,3 +55,45 @@ class crawler(object):
                                     market_type=market_type)
                 data_list.append(ticker_inst)
             page = page + 1
+
+from datetime import datetime, timedelta
+
+class Management(object):
+    def __init__(self):
+        self.today = datetime.now()
+        # self.oneday_ago = self.today-timedelta(days=1)
+        # self.oneday_ago = self.oneday_ago.strftime('%Y%m%d')
+        self.ticker = Ticker.objects.filter(date=self.today)
+        self.ordered_info_list = Info.objects.filter(date=self.today).order_by('-market_cap')
+
+    def sizeMangement(self):
+        kospi_rank = 1
+        kosdaq_rank = 1
+        for self.ordered_info in self.ordered_info_list:
+            print(self.ordered_info)
+            market = self.ticker.filter(code=self.ordered_info.code)[0].market_type
+            if market=='KOSPI' : #코스피
+                #시가총액 순위
+                self.ordered_info.market_cap_rank = kospi_rank
+                #코스피 사이즈 매기기
+                if(kospi_rank<=100):
+                    self.ordered_info.size_type = 'L'
+                elif(kospi_rank<=300):
+                    self.ordered_info.size_type = 'M'
+                else:
+                    self.ordered_info.size_type = 'S'
+                self.ordered_info.save()
+                kospi_rank += 1
+                print(kospi_rank)
+            else: #코스닥
+                self.ordered_info.market_cap_rank = kosdaq_rank
+                if (kosdaq_rank<=100):
+                    self.ordered_info.size_type = 'L'
+                elif (kosdaq_rank<=400):
+                    self.ordered_info.size_type = 'M'
+                else:
+                    self.ordered_info.size_type = 'S'
+                self.ordered_info.save()
+                kosdaq_rank += 1
+                print(kosdaq_rank)
+        return True
