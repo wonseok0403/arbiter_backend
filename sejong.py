@@ -36,6 +36,7 @@ class SejongData(object):
             code = self.ticker[i].code
             name = self.ticker[i].name
             r = requests.get(url, headers= self.user_agent, auth=('user', 'pass'))
+            time.sleep(0.03) # wonseok added
             soup = BeautifulSoup(r.text, 'html.parser')
             df1= pd.read_html(url, thousands='')
             financial =  df1[1]
